@@ -24,8 +24,6 @@ object Suggest {
         val toBeRecommendedRDD = friendsRDD1.union(friendsRDD2)
         val pairsRDD = toBeRecommendedRDD.reduceByKey((pair1, pair2) => (pair1 + DELIMITER + pair2))
         val mutualFriendsCountRDD = pairsRDD.map(line => (line._1, countMutualFriends(line._2))).sortBy(_._2, false).sortBy(_._1.split("-")(0).toLong)
-        //        val recommendationsRDD = mutualFriendsCountRDD.map(line => line._1).map(line => (line.split("-")(0) -> line.split("-")(1))).reduceByKey((x, y) => x + "," + y).sortBy(_._1.toLong)
-        //        val recommendationsRDD = mutualFriendsCountRDD.map(line => (line._1.split("-")(0), (line._1.split("-")(1), line._2))).reduceByKey((pair1, pair2) => someMethod(pair1, pair2)).sortBy(_._1.toLong)//.map(pair => getRecommendations(pair))//.map(pair => (pair._1, getRecommendations(pair._2)))
         val recommendationsRDD = mutualFriendsCountRDD.map(line => (line._1.split("-")(0), (line._1.split("-")(1), "" + line._2))).reduceByKey((pair1, pair2) => (pair1._1 + "," + pair2._1, pair1._2 + "," + pair2._2)).sortBy(_._1.toLong).map(pair => getRecommendations(pair))
         val output = recommendationsRDD.map(profile => (profile._1 + "\t" + profile._2))
         output.saveAsTextFile(".\\output")
