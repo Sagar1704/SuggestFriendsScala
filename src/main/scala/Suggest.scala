@@ -6,7 +6,6 @@ import scala.collection.mutable.LinkedHashMap
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
-import scala.util.Sorting
 
 object Suggest {
     val DELIMITER = '%'
@@ -24,30 +23,10 @@ object Suggest {
         val mutualFriendsCountRDD = pairsRDD.map(line => (line._1, countMutualFriends(line._2))).sortBy(_._2, false).sortBy(_._1.split("-")(0).toLong)
         //        val recommendationsRDD = mutualFriendsCountRDD.map(line => line._1).map(line => (line.split("-")(0) -> line.split("-")(1))).reduceByKey((x, y) => x + "," + y).sortBy(_._1.toLong)
         //        val recommendationsRDD = mutualFriendsCountRDD.map(line => (line._1.split("-")(0), (line._1.split("-")(1), line._2))).reduceByKey((pair1, pair2) => someMethod(pair1, pair2)).sortBy(_._1.toLong)//.map(pair => getRecommendations(pair))//.map(pair => (pair._1, getRecommendations(pair._2)))
-        val recommendationsRDD = mutualFriendsCountRDD.map(line => (line._1.split("-")(0), (line._1.split("-")(1), "" + line._2))).reduceByKey((pair1, pair2) => (pair1._1 + "," + pair2._1, pair1._2 + "," + pair2._2)).sortBy(_._1.toLong).map(pair => getRecommendations(pair)) //.map(pair => (pair._1, getRecommendations(pair._2)))
+        val recommendationsRDD = mutualFriendsCountRDD.map(line => (line._1.split("-")(0), (line._1.split("-")(1), "" + line._2))).reduceByKey((pair1, pair2) => (pair1._1 + "," + pair2._1, pair1._2 + "," + pair2._2)).sortBy(_._1.toLong).map(pair => getRecommendations(pair))
         val output = recommendationsRDD.map(profile => (profile._1 + "\t" + profile._2))
         output.saveAsTextFile(".\\output")
 
-    }
-
-    def someMethod(pair1: (String, Int), pair2: (String, Int)): (String, Int) = {
-        if (pair1._2 == 0 && pair2._2 == 0)
-            return ("", 0)
-        else {
-            if (pair1._2 == 0)
-                return (pair2._1, pair2._2)
-            else if (pair2._2 == 0)
-                return (pair1._1, pair1._2)
-            else {
-                if (pair1._2 == pair2._2) {
-                    if (pair1._1.toLong < pair2._1.toLong)
-                        return (pair1._1 + "," + pair2._1, pair1._2 + pair2._2)
-                    else
-                        return (pair2._1 + "," + pair1._1, pair1._2 + pair2._2)
-                } else
-                    return (pair1._1 + "," + pair2._1, pair1._2 + pair2._2)
-            }
-        }
     }
 
     def getRecommendations(pair: (String, (String, String))): (String, String) = {
