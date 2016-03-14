@@ -3,12 +3,15 @@ package main.scala
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
+
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
 
 object Suggest {
     val DELIMITER = '%'
+    val ALREADY_FRIEND = "_"
+
     def main(args: Array[String]): Unit = {
         val conf = new SparkConf().setAppName("suggest");
         val sc = new SparkContext(conf);
@@ -66,7 +69,7 @@ object Suggest {
         val friends = profile(1).split(",")
         val toBeRecommended = new HashMap[String, String]
         for (friend <- friends) {
-            toBeRecommended.put(user + "-" + friend, "")
+            toBeRecommended.put(user + "-" + friend, ALREADY_FRIEND)
         }
         return toBeRecommended
     }
@@ -86,12 +89,10 @@ object Suggest {
     }
 
     def countMutualFriends(friends: String): Int = {
-        if (friends.trim().equals("") || friends.startsWith("" + DELIMITER)) {
+        if (friends.contains("_")) {
             return 0
         } else {
-            val delimiterCount = friends.count(_ == DELIMITER)
-            val friendsCount = friends.length() - delimiterCount
-            return friendsCount
+            return friends.count(_ == DELIMITER) + 1
         }
     }
 }
